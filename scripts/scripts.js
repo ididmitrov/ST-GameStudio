@@ -1,13 +1,34 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+const startButton = document.getElementById("startButton");
 
-const boxSize = 20; // Размер клетки
-let snake = [{ x: 200, y: 200 }]; // Начальная позиция змейки
-let direction = "RIGHT"; // Направление движения
-let food = spawnFood(); // Начальная позиция еды
+const boxSize = 20;
+let snake;
+let direction;
+let food;
+let gameRunning = false;
+let gameInterval;
 
-document.addEventListener("keydown", changeDirection);
+// Начальная настройка игры
+function resetGame() {
+    snake = [{ x: 200, y: 200 }];
+    direction = "RIGHT";
+    food = spawnFood();
+    gameRunning = false;
+    clearInterval(gameInterval);
+    draw();
+}
 
+// Запуск игры
+function startGame() {
+    if (!gameRunning) {
+        resetGame();
+        gameRunning = true;
+        gameInterval = setInterval(gameLoop, 150);
+    }
+}
+
+// Управление направлением
 function changeDirection(event) {
     if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
     if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
@@ -15,7 +36,7 @@ function changeDirection(event) {
     if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
 }
 
-// Функция для случайного появления еды
+// Создание случайного положения еды
 function spawnFood() {
     return {
         x: Math.floor(Math.random() * (canvas.width / boxSize)) * boxSize,
@@ -23,39 +44,37 @@ function spawnFood() {
     };
 }
 
+// Основной игровой процесс
 function update() {
-    let head = { ...snake[0] }; // Копируем голову змеи
+    let head = { ...snake[0] };
 
-    // Изменяем позицию головы
     if (direction === "UP") head.y -= boxSize;
     if (direction === "DOWN") head.y += boxSize;
     if (direction === "LEFT") head.x -= boxSize;
     if (direction === "RIGHT") head.x += boxSize;
 
-    // Проверяем, съела ли змейка еду
+    // Если змейка съела еду
     if (head.x === food.x && head.y === food.y) {
-        food = spawnFood(); // Создаём новую еду
+        food = spawnFood();
     } else {
-        snake.pop(); // Удаляем хвост, если еда не съедена
+        snake.pop();
     }
 
-    // Проверка на столкновение со стенами
-    if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height) {
-        alert("Game Over!"); // Показываем сообщение
-        document.location.reload(); // Перезапускаем игру
+    // Проверка столкновений (стены или сама себя)
+    if (
+        head.x < 0 || head.x >= canvas.width ||
+        head.y < 0 || head.y >= canvas.height ||
+        snake.some(segment => head.x === segment.x && head.y === segment.y)
+    ) {
+        alert("Game Over!");
+        resetGame();
+        return;
     }
 
-    // Проверка на столкновение с самой собой
-    for (let segment of snake) {
-        if (head.x === segment.x && head.y === segment.y) {
-            alert("Game Over!");
-            document.location.reload();
-        }
-    }
-
-    snake.unshift(head); // Добавляем новую голову в массив
+    snake.unshift(head);
 }
 
+// Отрисовка игры
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -65,15 +84,22 @@ function draw() {
 
     // Рисуем змейку
     ctx.fillStyle = "lime";
-    snake.forEach((segment, index) => {
+    snake.forEach(segment => {
         ctx.fillRect(segment.x, segment.y, boxSize, boxSize);
     });
 }
 
+// Игровой цикл
 function gameLoop() {
-    update();
-    draw();
-    setTimeout(gameLoop, 150); // Скорость змейки
+    if (gameRunning) {
+        update();
+        draw();
+    }
 }
 
-gameLoop(); // Запускаем игру
+// Слушатели событий
+document.addEventListener("keydown", changeDirection);
+startButton.addEventListener("click", startGame);
+
+// Инициализация игры
+resetGame();
