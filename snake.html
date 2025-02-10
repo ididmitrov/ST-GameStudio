@@ -1,17 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="bg">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="img/snake-icon.png"
-        type="image/x-png" />
-    <title>SlitherByte</title>
+    <title>Движещ се елемент</title>
+    <link rel="stylesheet" href="./styles.css">
 </head>
-
 <body>
-    <!-- This is static HTML file, only label at this point -->
-    <!-- THE SNAKE WILL BE HERE -->
-</body>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
 
+        let position = { x: 200, y: 200 };
+        let speed = 20;
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "ArrowUp") position.y -= speed;
+            if (event.key === "ArrowDown") position.y += speed;
+            if (event.key === "ArrowLeft") position.x -= speed;
+            if (event.key === "ArrowRight") position.x += speed;
+        });
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "lime";
+            ctx.fillRect(position.x, position.y, 20, 20);
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
 </html>
