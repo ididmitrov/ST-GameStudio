@@ -13,21 +13,22 @@ let points = 0;
 
 // Начальная настройка игры
 function resetGame() {
+    if (gameRunning) return; // Не сбрасываем, если игра уже идет
+
     snake = [{ x: 200, y: 200 }];
     direction = "RIGHT";
     food = spawnFood();
-    gameRunning = false;
-    clearInterval(gameInterval);
+    pointEl.innerHTML = 0;
     draw();
 }
 
 // Запуск игры
 function startGame() {
-    if (!gameRunning) {
-        resetGame();
-        gameRunning = true;
-        gameInterval = setInterval(gameLoop, 150);
-    }
+    if (gameRunning) return; // Предотвращаем запуск нескольких игр одновременно
+
+    resetGame(); // Сбрасываем игру
+    gameRunning = true; // Игра начала работать
+    gameInterval = setInterval(gameLoop, 150); // Начинаем игровой цикл
 }
 
 // Управление направлением
@@ -40,16 +41,21 @@ function changeDirection(event) {
 
 // Создание случайного положения еды
 function spawnFood() {
-    return {
-        x: Math.floor(Math.random() * (canvas.width / boxSize)) * boxSize,
-        y: Math.floor(Math.random() * (canvas.height / boxSize)) * boxSize
-    };
+    let newFood;
+    do {
+        newFood = {
+            x: Math.floor(Math.random() * (canvas.width / boxSize)) * boxSize,
+            y: Math.floor(Math.random() * (canvas.height / boxSize)) * boxSize
+        };
+    } while (snake.some(segment => segment.x === newFood.x && segment.y === newFood.y)); // Избегаем появления еды на змейке
+
+    return newFood;
 }
 
 // Основной игровой процесс
 function update() {
     let head = { ...snake[0] };
- 
+
     if (direction === "UP") head.y -= boxSize;
     if (direction === "DOWN") head.y += boxSize;
     if (direction === "LEFT") head.x -= boxSize;
@@ -71,10 +77,15 @@ function update() {
         head.y < 0 || head.y >= canvas.height ||
         snake.some(segment => head.x === segment.x && head.y === segment.y)
     ) {
-        alert("Game Over!");
-        resetGame();
+        //alert("Game Over!");
+        gameRunning = false; // Останавливаем игру
+        clearInterval(gameInterval); // Останавливаем игровой цикл
+
+        // Отобразить "Game Over!" перед сбросом игры
+        requestAnimationFrame(drawGameOver);
+
         points = 0;
-        pointEl.innerHTML = 0;
+        startButton.innerHTML = "Restart";
         return;
     }
 
@@ -99,13 +110,24 @@ function animateFood() {
         foodAlpha = 1; // Оставляем 1, чтобы не было больше 1
         fadeDirection = -0.01; // Начинаем уменьшать прозрачность
     }
-    
+
     // Принудительно обновляем кадр
     requestAnimationFrame(animateFood); // Вызываем анимацию снова
 }
 
+// Функция отрисовки экрана "Game Over"
+function drawGameOver() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "red";
+    ctx.font = "50px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Game Over!", canvas.width / 2, canvas.height / 2);
+}
+
 // Функция отрисовки с плавным миганием еды
 function draw() {
+    if (!food) return; // Пропустить отрисовку, если food не определена
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Рисуем еду с изменяемой прозрачностью
@@ -124,13 +146,13 @@ function draw() {
     // Рисуем змейку с плавным градиентом
     snake.forEach((segment, index) => {
         let progress = index / (totalSegments - 1); // От 0 (хвост) до 1 (голова)
-        
+
         // Интерполяция цвета от белого к лаймовому
         let blue = Math.floor(progress * 255); // От 255 (белый) к 0 (лайм)
         let green = 255; // Всегда 255 (зелёный)
         let red = Math.floor(progress * 255); // От 255 (белый) к 0 (лайм)
         //console.log(red, blue);
-        
+
         // Гарантируем, что голова всегда лаймовая
         if (index === 0) {
             ctx.fillStyle = "lime";
@@ -148,7 +170,7 @@ animateFood();
 function gameLoop() {
     if (gameRunning) {
         update();
-        draw();    
+        draw();
     }
 }
 

@@ -17,7 +17,7 @@ canvas {
 }
 
 button {
-    
+    width: 98px;
     padding: 10px 20px;
     font-size: 18px;
     background-color: lime;
